@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسجل الكلمات العربية</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2575fc;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .instructions {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-right: 5px solid #2196f3;
+        }
+        
+        .instructions h2 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .instructions ol {
+            margin-right: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .progress-container {
+            margin: 25px 0;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 1.1rem;
+            color: #1976d2;
+            font-weight: bold;
+        }
+        
+        .recorder-section {
+            background-color: #f5f5f5;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .current-word-container {
+            margin-bottom: 30px;
+        }
+        
+        .word-number {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .current-word {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1976d2;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .transliteration {
+            font-size: 1.2rem;
+            color: #757575;
+        }
+        
+        .record-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 75, 92, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        
+        .record-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+        
+        .record-btn.recording {
+            background-color: #4CAF50;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .timer {
+            font-size: 1.5rem;
+            margin: 15px 0;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .save-btn:hover:not(:disabled) {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .reset-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .reset-btn:hover:not(:disabled) {
+            background-color: #e68900;
+            transform: translateY(-2px);
+        }
+        
+        .next-btn {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        .next-btn:hover:not(:disabled) {
+            background-color: #0b7dda;
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .success {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #2e7d32;
+        }
+        
+        .error {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        
+        .info {
+            background-color: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196f3;
+            color: #1565c0;
+        }
+        
+        .submit-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+        }
+        
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(37, 117, 252, 0.4);
+        }
+        
+        .email-form {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .email-form h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        audio {
+            width: 100%;
+            margin: 15px 0;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .completion-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            color: white;
+            border-radius: 15px;
+            display: none;
+        }
+        
+        .completion-section h2 {
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #FF9800, #FF5722);
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            margin: 15px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .audio-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>مسجل الكلمات العربية</h1>
+            <p>سجل نطق الكلمات العربية بالترتيب</p>
+        </header>
+        
+        <div class="instructions">
+            <h2>التعليمات</h2>
+            <ol>
+                <li>سوف تظهر لك الكلمات بالترتيب واحدًا تلو الآخر</li>
+                <li>انقر على زر التسجيل ونطق الكلمة بوضوح</li>
+                <li>استمع إلى التسجيل واحفظه إذا كان جيدًا</li>
+                <li>انتقل إلى الكلمة التالية</li>
+                <li>عند الانتهاء، أدخل اسمك وانقر على إنشاء حزمة التحميل</li>
+                <li>سيتم إنشاء ملف ZIP يحتوي على جميع تسجيلاتك</li>
+                <li>أرسل ملف ZIP كملف مرفق إلى: <strong>bayananadafa@gmail.com</strong></li>
+            </ol>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-text" id="progressText">الكلمة 1 من 23: صباح الخير</div>
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+        </div>
+        
+        <div class="recorder-section">
+            <div class="current-word-container">
+                <div class="word-number" id="wordNumber">الكلمة 1 من 23</div>
+                <div class="current-word" id="currentWord">صباح الخير</div>
+                <div class="transliteration" id="transliteration">Sabah al-khair</div>
+            </div>
+            
+            <button id="recordButton" class="record-btn">
+                <span id="recordIcon">🎤</span>
+            </button>
+            
+            <div id="timer" class="timer">00:00</div>
+            
+            <audio id="audioPlayback" controls style="display: none;"></audio>
+            
+            <div class="audio-controls">
+                <button id="saveButton" class="save-btn" disabled>حفظ التسجيل</button>
+                <button id="resetButton" class="reset-btn" disabled>إعادة التسجيل</button>
+                <button id="nextButton" class="next-btn" disabled>الكلمة التالية</button>
+            </div>
+            
+            <div id="status" class="status info">
+                انقر على زر التسجيل لتسجيل الكلمة الحالية
+            </div>
+        </div>
+        
+        <div class="submit-section">
+            <div id="emailForm" class="email-form" style="display: none;">
+                <h3>أدخل معلوماتك لإنشاء حزمة التسجيلات</h3>
+                <div class="form-group">
+                    <label for="userName">اسمك:</label>
+                    <input type="text" id="userName" placeholder="أدخل اسمك هنا">
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">بريدك الإلكتروني (اختياري):</label>
+                    <input type="email" id="userEmail" placeholder="أدخل بريدك الإلكتروني">
+                </div>
+                <button id="submitButton" class="submit-btn">
+                    <span id="submitText">إنشاء حزمة التحميل (ZIP)</span>
+                    <span id="submitLoading" class="loading" style="display: none;"></span>
+                </button>
+                <p style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                    سيتم إنشاء ملف ZIP يحتوي على جميع تسجيلاتك<br>
+                    يرجى إرسال هذا الملف إلى: <strong>bayananadafa@gmail.com</strong>
+                </p>
+            </div>
+        </div>
+
+        <div id="completionSection" class="completion-section">
+            <h2>🎉 تم الإنشاء بنجاح!</h2>
+            <p>تم إنشاء ملف ZIP يحتوي على جميع تسجيلاتك</p>
+            <p>يرجى إرسال ملف ZIP كملف مرفق إلى:</p>
+            <p style="font-size: 1.2em; margin: 10px 0;"><strong>bayananadafa@gmail.com</strong></p>
+            
+            <button id="downloadAgainBtn" class="download-btn">تحميل الملف مرة أخرى</button>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.2); border-radius: 10px;">
+                <h3>📧 تعليمات الإرسال:</h3>
+                <ol style="text-align: right; margin-right: 20px;">
+                    <li>افتح بريدك الإلكتروني</li>
+                    <li>أنشئ رسالة جديدة إلى: bayananadafa@gmail.com</li>
+                    <li>أرفق ملف ZIP الذي تم تحميله</li>
+                    <li>اكتب في الموضوع: "تسجيلات عربية - <span id="userNameDisplay"></span>"</li>
+                    <li>أرسل الرسالة</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>لن يتم تخزين تسجيلاتك على أي خادم - جميع التسجيلات محفوظة على جهازك</p>
+    </footer>
+
+    <script>
+        // Initialize EmailJS
+        emailjs.init("J4cvpckD06Fhzk9jv");
+        
+        // Word list
+        const words = [
+            { arabic: "صباح الخير", transliteration: "Sabah al-khair" },
+            { arabic: "نوم هادئ", transliteration: "Noum hadi" },
+            { arabic: "تصبح على خير", transliteration: "Tusbih ala khair" },
+            { arabic: "تفاح", transliteration: "Tuffah" },
+            { arabic: "موز", transliteration: "Mawz" },
+            { arabic: "عنب", transliteration: "Inab" },
+            { arabic: "كرز", transliteration: "Karaz" },
+            { arabic: "خوخ", transliteration: "Khokh" },
+            { arabic: "خيار", transliteration: "Khiyar" },
+            { arabic: "خس", transliteration: "Khas" },
+            { arabic: "جزر", transliteration: "Jazar" },
+            { arabic: "بطيخ", transliteration: "Battikh" },
+            { arabic: "فراولة", transliteration: "Frawla" },
+            { arabic: "بطاطا", transliteration: "Batata" },
+            { arabic: "كوسا", transliteration: "Kusa" },
+            { arabic: "موو", transliteration: "Moo" },
+            { arabic: "ريي", transliteration: "Ree" },
+            { arabic: "كوكو", transliteration: "Koko" },
+            { arabic: "فيي", transliteration: "Fee" },
+            { arabic: "راا", transliteration: "Raa" },
+            { arabic: "انا نعسان", transliteration: "Ana na'san" },
+            { arabic: "باا", transliteration: "Baa" },
+            { arabic: "كوكوكو", transliteration: "Kokoko" }
+        ];
+
+        // DOM Elements
+        const currentWordElement = document.getElementById('currentWord');
+        const transliterationElement = document.getElementById('transliteration');
+        const wordNumberElement = document.getElementById('wordNumber');
+        const progressTextElement = document.getElementById('progressText');
+        const progressBarElement = document.getElementById('progressBar');
+        const recordButton = document.getElementById('recordButton');
+        const saveButton = document.getElementById('saveButton');
+        const resetButton = document.getElementById('resetButton');
+        const nextButton = document.getElementById('nextButton');
+        const submitButton = document.getElementById('submitButton');
+        const submitText = document.getElementById('submitText');
+        const submitLoading = document.getElementById('submitLoading');
+        const emailForm = document.getElementById('emailForm');
+        const completionSection = document.getElementById('completionSection');
+        const downloadAgainBtn = document.getElementById('downloadAgainBtn');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const timerDisplay = document.getElementById('timer');
+        const statusDisplay = document.getElementById('status');
+        const audioPlayback = document.getElementById('audioPlayback');
+        const recordIcon = document.getElementById('recordIcon');
+        const userNameInput = document.getElementById('userName');
+        const userEmailInput = document.getElementById('userEmail');
+
+        // Variables
+        let mediaRecorder;
+        let audioStream;
+        let audioChunks = [];
+        let timerInterval;
+        let seconds = 0;
+        let isRecording = false;
+        let audioBlob = null;
+        let currentWordIndex = 0;
+        let recordedWords = Array(words.length).fill(null);
+        let recordedCount = 0;
+        let currentUserName = '';
+
+        // Check browser compatibility
+        function checkCompatibility() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusDisplay.innerHTML = `
+                    <strong>المتصفح غير مدعوم</strong><br>
+                    <small>هذا التطبيق يتطلب متصفحاً حديثاً يدعم التسجيل الصوتي</small><br>
+                    <small>يرجى استخدام Chrome, Firefox, أو Edge</small>
+                `;
+                statusDisplay.className = 'status error';
+                return false;
+            }
+            
+            if (!MediaRecorder) {
+                statusDisplay.innerHTML = `
+                    <strong>المتصفح لا يدعم التسجيل</strong><br>
+                    <small>MediaRecorder API غير متوفر في هذا المتصفح</small>
+                `;
+                statusDisplay.className = 'status error';
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Initialize the application
+        async function initializeApp() {
+            if (!checkCompatibility()) {
+                return;
+            }
+            updateWordDisplay();
+            updateProgress();
+            await initRecorder();
+        }
+
+        // Update word display
+        function updateWordDisplay() {
+            const word = words[currentWordIndex];
+            currentWordElement.textContent = word.arabic;
+            transliterationElement.textContent = word.transliteration;
+            wordNumberElement.textContent = `الكلمة ${currentWordIndex + 1} من ${words.length}`;
+            
+            recordButton.disabled = false;
+            saveButton.disabled = true;
+            resetButton.disabled = !recordedWords[currentWordIndex];
+            nextButton.disabled = !recordedWords[currentWordIndex];
+            
+            if (recordedWords[currentWordIndex]) {
+                audioPlayback.style.display = 'block';
+                audioPlayback.src = URL.createObjectURL(recordedWords[currentWordIndex]);
+                statusDisplay.textContent = 'تم تسجيل هذه الكلمة. يمكنك إعادة التسجيل إذا لزم الأمر.';
+                statusDisplay.className = 'status info';
+            } else {
+                audioPlayback.style.display = 'none';
+                statusDisplay.textContent = 'انقر على زر التسجيل لتسجيل الكلمة الحالية.';
+                statusDisplay.className = 'status info';
+            }
+            
+            stopTimer();
+            seconds = 0;
+            updateTimerDisplay();
+        }
+
+        // Update progress display
+        function updateProgress() {
+            recordedCount = recordedWords.filter(word => word !== null).length;
+            const progressPercent = (recordedCount / words.length) * 100;
+            progressBarElement.style.width = `${progressPercent}%`;
+            progressTextElement.textContent = `الكلمة ${currentWordIndex + 1} من ${words.length}: ${words[currentWordIndex].arabic}`;
+            
+            if (recordedCount === words.length) {
+                emailForm.style.display = 'block';
+                statusDisplay.textContent = 'تهانينا! لقد سجلت جميع الكلمات. أدخل اسمك وانقر على إنشاء حزمة التحميل.';
+                statusDisplay.className = 'status success';
+            }
+        }
+
+        // Initialize recording functionality - COMPLETELY FIXED
+        async function initRecorder() {
+            try {
+                // Get fresh audio stream every time
+                audioStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    } 
+                });
+                
+                statusDisplay.textContent = 'الميكروفون جاهز. اختر كلمة وابدأ التسجيل.';
+                statusDisplay.className = 'status info';
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                statusDisplay.innerHTML = `
+                    <strong>خطأ في الوصول إلى الميكروفون</strong><br>
+                    <small>${error.message}</small><br>
+                    <small>يرجى التأكد من:</small>
+                    <ul style="text-align: right; margin: 10px 0;">
+                        <li>منح الإذن لاستخدام الميكروفون</li>
+                        <li>استخدام متصفح حديث (Chrome, Firefox, Edge)</li>
+                        <li>التأكد من أن الميكروفون يعمل</li>
+                    </ul>
+                `;
+                statusDisplay.className = 'status error';
+                recordButton.disabled = true;
+            }
+        }
+
+        // Create new MediaRecorder for each recording - FIXED
+        function createMediaRecorder() {
+            // Use webm format for better browser compatibility
+            let options = {};
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                options = { mimeType: 'audio/webm;codecs=opus' };
+            } else {
+                options = { mimeType: 'audio/webm' };
+            }
+            
+            try {
+                mediaRecorder = new MediaRecorder(audioStream, options);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+                    audioBlob = new Blob(audioChunks, { type: mimeType });
+                    audioPlayback.style.display = 'block';
+                    audioPlayback.src = URL.createObjectURL(audioBlob);
+                    saveButton.disabled = false;
+                    resetButton.disabled = false;
+                    statusDisplay.textContent = 'اكتمل التسجيل! استمع إلى التسجيل واحفظه إذا كان جيدًا.';
+                    statusDisplay.className = 'status success';
+                    
+                    // Clean up the MediaRecorder
+                    mediaRecorder = null;
+                };
+                
+                return true;
+            } catch (error) {
+                console.error('Error creating MediaRecorder:', error);
+                return false;
+            }
+        }
+
+        // Toggle recording - COMPLETELY FIXED
+        async function toggleRecording() {
+            if (!isRecording) {
+                // Start fresh recording
+                audioChunks = [];
+                
+                if (!mediaRecorder) {
+                    if (!createMediaRecorder()) {
+                        statusDisplay.textContent = 'خطأ في بدء التسجيل. يرجى المحاولة مرة أخرى.';
+                        statusDisplay.className = 'status error';
+                        return;
+                    }
+                }
+                
+                try {
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordButton.classList.add('recording');
+                    recordIcon.textContent = '⏹️';
+                    startTimer();
+                    statusDisplay.textContent = 'جاري التسجيل... انطق الكلمة بوضوح الآن.';
+                    statusDisplay.className = 'status info';
+                    saveButton.disabled = true;
+                } catch (error) {
+                    console.error('Error starting recording:', error);
+                    statusDisplay.textContent = 'خطأ في بدء التسجيل. يرجى المحاولة مرة أخرى.';
+                    statusDisplay.className = 'status error';
+                    isRecording = false;
+                    recordButton.classList.remove('recording');
+                    recordIcon.textContent = '🎤';
+                }
+                
+            } else {
+                // Stop recording
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+                isRecording = false;
+                recordButton.classList.remove('recording');
+                recordIcon.textContent = '🎤';
+                stopTimer();
+            }
+        }
+
+        // Timer functions
+        function startTimer() {
+            seconds = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Save recording for current word
+        function saveRecording() {
+            if (!audioBlob) {
+                statusDisplay.textContent = 'لا يوجد تسجيل للحفظ. يرجى تسجيل شيء أولاً.';
+                statusDisplay.className = 'status error';
+                return;
+            }
+            
+            recordedWords[currentWordIndex] = audioBlob;
+            updateProgress();
+            nextButton.disabled = false;
+            statusDisplay.textContent = 'تم حفظ الكلمة! يمكنك الانتقال إلى الكلمة التالية.';
+            statusDisplay.className = 'status success';
+            
+            // Reset for next recording
+            audioBlob = null;
+        }
+
+        // Reset recording for current word
+        function resetRecording() {
+            recordedWords[currentWordIndex] = null;
+            updateProgress();
+            audioPlayback.style.display = 'none';
+            saveButton.disabled = true;
+            nextButton.disabled = true;
+            resetButton.disabled = true;
+            audioBlob = null;
+            statusDisplay.textContent = 'تم إعادة تعيين التسجيل. انقر على تسجيل للمحاولة مرة أخرى.';
+            statusDisplay.className = 'status info';
+        }
+
+        // Move to next word
+        function nextWord() {
+            if (currentWordIndex < words.length - 1) {
+                currentWordIndex++;
+                updateWordDisplay();
+                updateProgress();
+                // Reset recording state for new word
+                audioBlob = null;
+                mediaRecorder = null;
+            }
+        }
+
+        // Create ZIP file with all recordings
+        async function createZipFile(userName) {
+            const zip = new JSZip();
+            const audioFolder = zip.folder("التسجيلات العربية");
+            
+            for (let i = 0; i < recordedWords.length; i++) {
+                if (recordedWords[i]) {
+                    const filename = `${i + 1}-${words[i].transliteration}.webm`;
+                    audioFolder.file(filename, recordedWords[i]);
+                }
+            }
+            
+            const readmeContent = `تسجيلات الكلمات العربية
+المستخدم: ${userName}
+تاريخ الإنشاء: ${new Date().toLocaleString('ar-EG')}
+إجمالي التسجيلات: ${recordedCount} من 23
+
+تعليمات الإرسال:
+1. أرسل هذا الملف كملف مرفق في بريد إلكتروني إلى: bayananadafa@gmail.com
+2. اكتب في موضوع البريد: "تسجيلات عربية - ${userName}"
+3. لا تنسى ذكر اسمك في نص الرسالة
+
+قائمة الكلمات المسجلة:
+${words.map((word, index) => 
+    recordedWords[index] ? `✓ ${index + 1}. ${word.arabic} (${word.transliteration})` : `✗ ${index + 1}. ${word.arabic} (${word.transliteration})`
+).join('\n')}`;
+            
+            audioFolder.file("تعليمات الإرسال.txt", readmeContent);
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            return zipBlob;
+        }
+
+        // Download ZIP file
+        function downloadZipFile(zipBlob, userName) {
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `تسجيلات-عربية-${userName}-${new Date().toISOString().split('T')[0]}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Submit all recordings
+        async function submitRecordings() {
+            const userName = userNameInput.value.trim();
+            const userEmail = userEmailInput.value.trim();
+            
+            if (!userName) {
+                statusDisplay.textContent = 'يرجى إدخال اسمك قبل المتابعة.';
+                statusDisplay.className = 'status error';
+                return;
+            }
+            
+            if (recordedCount < words.length) {
+                statusDisplay.textContent = `يرجى تسجيل جميع الكلمات ${words.length} قبل المتابعة.`;
+                statusDisplay.className = 'status error';
+                return;
+            }
+            
+            submitText.textContent = 'جاري إنشاء الملف...';
+            submitLoading.style.display = 'inline-block';
+            submitButton.disabled = true;
+            statusDisplay.textContent = 'جارٍ إنشاء ملف ZIP يحتوي على جميع تسجيلاتك...';
+            statusDisplay.className = 'status info';
+            
+            try {
+                currentUserName = userName;
+                const zipBlob = await createZipFile(userName);
+                downloadZipFile(zipBlob, userName);
+                
+                const recordingsInfo = [];
+                for (let i = 0; i < recordedWords.length; i++) {
+                    if (recordedWords[i]) {
+                        recordingsInfo.push({
+                            word: words[i].arabic,
+                            transliteration: words[i].transliteration,
+                            number: i + 1
+                        });
+                    }
+                }
+                
+                const templateParams = {
+                    to_email: 'bayananadafa@gmail.com',
+                    from_name: userName,
+                    from_email: userEmail || 'لم يتم تقديم بريد إلكتروني',
+                    user_name: userName,
+                    total_recordings: recordedCount,
+                    submission_date: new Date().toLocaleString('ar-EG'),
+                    recordings_list: recordingsInfo.map(rec => 
+                        `الكلمة ${rec.number}: ${rec.word} (${rec.transliteration})`
+                    ).join('\n'),
+                    message: `تم إنشاء حزمة تسجيلات جديدة من قبل ${userName}. يرجى الانتظار حتى يقوم المستخدم بإرسال ملف ZIP عبر البريد الإلكتروني.`
+                };
+                
+                await emailjs.send('service_4mn7bos', 'template_im3hikg', templateParams);
+                
+                emailForm.style.display = 'none';
+                completionSection.style.display = 'block';
+                userNameDisplay.textContent = userName;
+                
+                statusDisplay.innerHTML = `<strong>تم الإنشاء بنجاح!</strong><br>
+                ✓ تم إنشاء ملف ZIP يحتوي على جميع التسجيلات<br>
+                ✓ تم تحميل الملف تلقائيًا<br>
+                ✓ تم إرسال إشعار إلى: <strong>bayananadafa@gmail.com</strong><br>
+                <small>يرجى إرسال ملف ZIP كملف مرفق عبر البريد الإلكتروني</small>`;
+                statusDisplay.className = 'status success';
+                
+            } catch (error) {
+                submitText.textContent = 'إنشاء حزمة التحميل (ZIP)';
+                submitLoading.style.display = 'none';
+                submitButton.disabled = false;
+                statusDisplay.innerHTML = `<strong>حدث خطأ أثناء الإنشاء</strong><br>
+                <small>${error.message || 'يرجى المحاولة مرة أخرى'}</small>`;
+                statusDisplay.className = 'status error';
+            }
+        }
+
+        // Download again functionality
+        downloadAgainBtn.addEventListener('click', async function() {
+            if (!currentUserName) return;
+            
+            this.textContent = 'جاري التحميل...';
+            this.disabled = true;
+            
+            try {
+                const zipBlob = await createZipFile(currentUserName);
+                downloadZipFile(zipBlob, currentUserName);
+                
+                setTimeout(() => {
+                    this.textContent = 'تحميل الملف مرة أخرى';
+                    this.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                this.textContent = 'تحميل الملف مرة أخرى';
+                this.disabled = false;
+                alert('حدث خطأ أثناء التحميل: ' + error.message);
+            }
+        });
+
+        // Event listeners
+        recordButton.addEventListener('click', toggleRecording);
+        saveButton.addEventListener('click', saveRecording);
+        resetButton.addEventListener('click', resetRecording);
+        nextButton.addEventListener('click', nextWord);
+        submitButton.addEventListener('click', submitRecordings);
+
+        // Initialize the application
+        initializeApp();
+    </script>
+</body>
+</html>
